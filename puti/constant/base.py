@@ -33,6 +33,10 @@ class Base(Enum):
     def keys(cls: Type[BaseSub]) -> set:
         return {item.val for item in cls}
 
+    @classmethod
+    def to_list(cls) -> list:
+        return list(cls.keys())
+
 
 class PathAutoCreate:
     """Utility class for automatically creating paths."""
