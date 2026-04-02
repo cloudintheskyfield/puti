@@ -47,3 +47,16 @@ secrets.json
 
 data/
 !data/tweet_chunk.txt
+
+# Runtime artifacts
+*.pid
+server_pid.txt
+sse_pid*.txt
+server_log.txt
+sse_output*.txt
+
+# Local backups / accidental home-dir copies
+*.bak
+~
+~/
+**/~/

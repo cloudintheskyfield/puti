@@ -30,7 +30,10 @@ class LoggerFactory(object):
     def _define_loggers(cls, print_level=_print_level, logfile_level=_logfile_level):
         _logger.remove()
         _logger.add(sys.stderr, level=print_level, enqueue=False, backtrace=True, diagnose=True)
-        _logger.level("OBSTACLES", no=38, color="<green>", icon="😋")
+        try:
+            _logger.level("OBSTACLES", no=38, color="<green>", icon="😋")
+        except ValueError:
+            pass  # Level already exists
 
         # Define named loggers that write to the console stream instead of files.
         # This prevents the automatic creation of log directories.

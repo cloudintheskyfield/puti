@@ -7,6 +7,8 @@ import asyncio
 import os
 import urllib.parse
 import json
+import uuid
+import requests
 
 from typing import Optional, Dict, Any, Tuple, Literal
 from contextlib import AsyncExitStack
@@ -76,13 +78,13 @@ class MCPClient:
         # 去除URL末尾的斜杠
         base_url = server_url.rstrip('/')
         
-        # 尝试的路径列表 - FastMCP可能在其中一个路径上提供SSE服务
+        # 尝试的路径列表 - 首先尝试/sse路径，这是我们自定义服务器的默认路径
         paths_to_try = [
+            "/sse",         # 我们自定义服务器的SSE路径
             "",             # 直接使用基础URL
             "/api",         # 常见API路径
             "/v1",          # 版本化API常见路径
             "/mcp",         # MCP相关路径
-            "/sse",         # SSE特定路径
             "/events",      # 事件流相关路径
             "/mcp/api",     # 组合路径
             "/mcp/v1"       # 组合路径
@@ -91,22 +93,57 @@ class MCPClient:
         # 存储原始错误以便在所有尝试失败时报告
         last_error = None
         
+        # 生成会话ID
+        session_id = str(uuid.uuid4())
+        print(f"生成会话ID: {session_id}")
+        
         # 尝试每个路径
         for path in paths_to_try:
             try:
                 full_url = f"{base_url}{path}"
                 print(f"尝试连接到: {full_url}")
                 
+                # 首先尝试通过HTTP请求获取工具列表，以验证服务器是否在线
+                tools_url = f"{base_url}/tools"
+                try:
+                    response = requests.get(tools_url, timeout=5)
+                    if response.status_code == 200:
+                        print(f"服务器在线，工具列表端点可访问: {tools_url}")
+                        tools_data = response.json()
+                        tools_count = tools_data.get("count", 0)
+                        print(f"服务器提供 {tools_count} 个工具")
+                except Exception as e:
+                    print(f"无法访问工具列表端点: {str(e)}")
+                
+                # 创建SSE连接
                 sse_transport = await self.exit_stack.enter_async_context(sse_client(full_url))
                 self.session = await self.exit_stack.enter_async_context(ClientSession(sse_transport))
-                await self.session.initialize()
+                
+                # 初始化会话
+                print(f"正在初始化会话: {session_id}")
+                await self.session.initialize(
+                    client_info={
+                        "name": "puti-mcp-client",
+                        "version": "1.0.0"
+                    },
+                    capabilities={}
+                )
                 
                 # 如果成功，记录使用的URL并返回
                 print(f"成功连接到: {full_url}")
+                print(f"会话初始化成功: {session_id}")
                 return
             except Exception as e:
                 print(f"连接到 {full_url} 失败: {str(e)}")
                 last_error = e
+                
+                # 如果是初始化失败，尝试清理资源
+                if self.session:
+                    try:
+                        await self.exit_stack.aclose()
+                        self.session = None
+                    except Exception:
+                        pass
         
         # 如果所有尝试都失败，则抛出最后一个错误
         if last_error:
