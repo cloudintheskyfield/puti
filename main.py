@@ -3,6 +3,7 @@
 @Time: 20/01/25 11:29
 @Description:  
 """
+import puti.bootstrap  # noqa: F401
 import time
 import uvicorn
 import click

@@ -2,7 +2,7 @@
 
 <!-- 奇异人生(Life is Strange)风格Logo - Max的笔记本风格 -->
 <p align="center">
-  <img src="examples/assets/puti_logo_final.svg" alt="PUTI Logo - Life is Strange Journal Style" width="400"/>
+  <img src="https://raw.githubusercontent.com/cloudintheskyfield/puti/main/examples/assets/puti_logo_final.png" alt="PUTI Logo - Life is Strange Journal Style" width="400"/>
 </p>
 
 <p align="center">
@@ -30,10 +30,10 @@ Puti is a versatile, multi-agent framework designed to simplify the development 
 -   **🚀 Ready-to-Use Agents**: Get started quickly with pre-built agents like `Alex` (general-purpose) and `Ethan` (Twitter-focused).
 
 ### Alex-Chat
-![Alex Chat Demo](examples/puti_alex.gif)
+![Alex Chat Demo](https://raw.githubusercontent.com/cloudintheskyfield/puti/main/examples/puti_alex.gif)
 
 ### Ethan-Chat
-![Ethan Chat Demo](examples/ethan.png)
+![Ethan Chat Demo](https://raw.githubusercontent.com/cloudintheskyfield/puti/main/examples/ethan.png)
 
 ## 🚀 Upcoming Features
 

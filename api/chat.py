@@ -3,12 +3,13 @@
 @Time:  2025-04-09 16:25
 @Description:  
 """
+import puti.bootstrap  # noqa: F401
 import asyncio
+import re
 import ollama._types
 
 from typing import Optional
 from fastapi import APIRouter, Request
-from puti.llm.roles.cz import CZ
 from puti.core.resp import Response
 from puti.llm.nodes import OpenAINode, OllamaNode
 from puti.conf.llm_config import LlamaConfig
@@ -19,6 +20,13 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 
 chat_router = APIRouter()
 lgr = logger_factory.default
+
+
+def strip_thinking_content(text: str) -> str:
+    if not isinstance(text, str):
+        return text
+    cleaned = re.sub(r'<think>.*?</think>\s*', '', text, flags=re.DOTALL)
+    return cleaned.strip()
 
 
 class GenerateCzTweetRequest(BaseModel):
@@ -32,6 +40,9 @@ class AskLlmRequest(BaseModel):
 
 @chat_router.post('/generate_cz_tweet')
 def generate_cz_tweet(request: GenerateCzTweetRequest):
+    # Delay the CZ role import so the generic chat endpoints don't require X/Twitter deps.
+    from puti.llm.roles.cz import CZ
+
     cz = CZ()
     resp = cz.cp.invoke(cz.run, request.text)
     return resp
@@ -41,8 +52,11 @@ def generate_cz_tweet(request: GenerateCzTweetRequest):
 def ask_llm(request: AskLlmRequest):
     node = OpenAINode()
     node.conf.MODEL = request.model_name
+    # This endpoint returns a plain response body, so use non-streaming requests
+    # for better compatibility with providers like MiniMax.
+    node.conf.STREAM = False
     resp = asyncio.run(node.chat([UserMessage(request.text).to_message_dict()]))
-    return resp
+    return strip_thinking_content(resp)
 
 
 @chat_router.post('/ask_dark_champion')
